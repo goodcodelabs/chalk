@@ -1,6 +1,6 @@
 import type {
   Workspace, Catalog, Thread, Message,
-  Pipeline, Job, JobStatus, JobResult, SystemStats,
+  Pipeline, Job, JobStatus, JobResult, SystemStats, TraceEvent,
 } from './types'
 
 const BASE = '/api'
@@ -58,6 +58,9 @@ export const api = {
 
   // ---- Agents ---------------------------------------------------------------
 
+  delAgent: (agentId: string) =>
+    del<{ status: string }>(`/agents/${encodeURIComponent(agentId)}`),
+
   setAgentInstructions: (agentId: string, instructions: string) =>
     put<{ status: string }>(`/agents/${agentId}/instructions`, { instructions }),
 
@@ -89,6 +92,9 @@ export const api = {
 
   threadHistory: (threadId: string) =>
     get<{ messages: Message[] }>(`/threads/${threadId}/history`).then(r => r.messages ?? []),
+
+  threadTrace: (threadId: string) =>
+    get<{ events: TraceEvent[] }>(`/threads/${threadId}/trace`).then(r => r.events ?? []),
 
   // ---- Agent Threads --------------------------------------------------------
 
@@ -133,4 +139,7 @@ export const api = {
 
   cancelJob: (jobId: string) =>
     post<{ status: string }>(`/jobs/${jobId}/cancel`, {}),
+
+  waitJob: (jobId: string) =>
+    post<JobResult>(`/jobs/${jobId}/wait`, {}),
 }

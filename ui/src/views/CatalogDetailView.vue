@@ -49,6 +49,10 @@
                 v-if="agent.External"
                 class="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full"
               >external</span>
+              <button
+                class="text-red-400 hover:text-red-600 text-xs px-2 py-0.5 rounded hover:bg-red-50"
+                @click.stop="deleteAgent(agent)"
+              >Delete</button>
             </div>
           </div>
           <div class="text-xs text-gray-500 space-y-0.5">
@@ -92,7 +96,7 @@ import { useRouter } from 'vue-router'
 import PageHeader from '../components/PageHeader.vue'
 import Modal from '../components/Modal.vue'
 import { api } from '../api/client'
-import type { Catalog } from '../api/types'
+import type { Catalog, Agent } from '../api/types'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
@@ -127,6 +131,12 @@ async function addAgent() {
   } finally {
     addingAgent.value = false
   }
+}
+
+async function deleteAgent(agent: Agent) {
+  if (!confirm(`Delete agent "${agent.Name}"?`)) return
+  await api.delAgent(agent.ID)
+  await load()
 }
 
 async function deleteCatalog() {

@@ -76,6 +76,15 @@ export interface JobResult {
   error: string
 }
 
+export interface TraceEvent {
+  type: string
+  agent_id?: string
+  tool?: string
+  input?: string
+  output?: string
+  timestamp: string
+}
+
 export interface SystemStats {
   jobs: Record<string, number>
   scheduler_queue: number

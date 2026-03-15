@@ -212,7 +212,12 @@ func (s *server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	passthrough(w, s.slate, "health", map[string]interface{}{})
+	_, err := s.slate.sendCmd("health", map[string]interface{}{})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func (s *server) handleStats(w http.ResponseWriter, r *http.Request) {
@@ -450,6 +455,19 @@ func (s *server) handleCatalogs(w http.ResponseWriter, r *http.Request, segs []s
 // ---- Agents  /api/agents/... ------------------------------------------------
 
 func (s *server) handleAgents(w http.ResponseWriter, r *http.Request, segs []string) {
+	if len(segs) == 1 {
+		if r.Method != http.MethodDelete {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		_, err := s.slate.sendCmd("del_agent", map[string]interface{}{"agent_id": segs[0]})
+		if err != nil {
+			writeError(w, http.StatusBadGateway, err.Error())
+			return
+		}
+		writeOK(w)
+		return
+	}
 	if len(segs) < 2 {
 		writeError(w, http.StatusNotFound, "not found")
 		return
@@ -674,6 +692,14 @@ func (s *server) handleThreads(w http.ResponseWriter, r *http.Request, segs []st
 		}
 		passthrough(w, s.slate, "thread_history", map[string]interface{}{"thread_id": threadID})
 
+	case "trace":
+		// GET /api/threads/:id/trace
+		if r.Method != http.MethodGet {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		passthrough(w, s.slate, "thread_trace", map[string]interface{}{"thread_id": threadID})
+
 	default:
 		writeError(w, http.StatusNotFound, "not found")
 	}
@@ -787,6 +813,14 @@ func (s *server) handleJobs(w http.ResponseWriter, r *http.Request, segs []strin
 			return
 		}
 		writeOK(w)
+
+	case "wait":
+		// POST /api/jobs/:id/wait
+		if r.Method != http.MethodPost {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		passthrough(w, s.slate, "wait_job", map[string]interface{}{"job_id": jobID})
 
 	default:
 		writeError(w, http.StatusNotFound, "not found")
